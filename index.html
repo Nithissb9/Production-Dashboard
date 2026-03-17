@@ -1,4 +1,5 @@
 
+
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -146,22 +147,37 @@
                 try {
                     const client = window.supabase.createClient(supabaseConfig.url, supabaseConfig.key);
                     
-                    const dataToInsert = rawData.map(row => {
-                        // Create a stable unique identifier for this row to prevent duplicates when re-uploading the same file
-                        // Using a combination of date, machine, customer, size, shift, and order no
-                        const uniqueIdStr = `${row.date}_${row.machine}_${row.customer}_${row.size}_${row.shift}_${row.orderNo}_${row.symptom}`;
+                    const seenRowCounts = {};
+                    
+                    const dataToInsert = rawData.map((row) => {
+                        // Create a stable, purely data-based identifier string for the row
+                        // (We use all key fields to define uniqueness)
+                        const baseIdStr = `${row.date}_${row.machine}_${row.customer}_${row.size}_${row.shift}_${row.orderNo}_${row.symptom}_${row.fgKg}_${row.scrapKg}_${row.reworkKg}`;
                         
-                        // Hash the string to create a compact fingerprint (simple hash for browser)
+                        // Simple 32-bit hash function to compress the string
                         let hash = 0;
-                        for (let i = 0; i < uniqueIdStr.length; i++) {
-                            const char = uniqueIdStr.charCodeAt(i);
+                        for (let i = 0; i < baseIdStr.length; i++) {
+                            const char = baseIdStr.charCodeAt(i);
                             hash = ((hash << 5) - hash) + char;
-                            hash = hash & hash; // Convert to 32bit integer
+                            hash = hash & hash;
                         }
-                        const uniqueFingerprint = `row_${Math.abs(hash)}`;
+                        const baseFingerprint = `row_${Math.abs(hash)}`;
+
+                        // --- THE MAGIC FIX FOR 'CANNOT AFFECT ROW A SECOND TIME' ---
+                        // If the CSV strictly contains identical duplicate rows, their baseFingerprint will be the same.
+                        // We count them and append '_copy1', '_copy2', etc. to guarantee uniqueness WITHIN THE PAYLOAD.
+                        // When uploaded tomorrow, the exact same copies will get the exact same '_copyN' suffixes,
+                        // making it perfectly idempotent (safe to re-upload) without duplicating data in Supabase!
+                        let finalFingerprint = baseFingerprint;
+                        if (seenRowCounts[baseFingerprint] !== undefined) {
+                            seenRowCounts[baseFingerprint]++;
+                            finalFingerprint = `${baseFingerprint}_copy${seenRowCounts[baseFingerprint]}`;
+                        } else {
+                            seenRowCounts[baseFingerprint] = 0;
+                        }
 
                         return {
-                            fingerprint: uniqueFingerprint, // This will be used as a unique key in Supabase
+                            fingerprint: finalFingerprint, // This will be used as the unique key in Supabase
                             date: row.date,
                             fg_kg: row.fgKg,
                             fg_rolls: row.fgRolls,
