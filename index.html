@@ -108,17 +108,37 @@
                     setSupabaseMessage({ type: 'info', text: 'กำลังโหลดข้อมูลจากฐานข้อมูล...' });
                     const client = window.supabase.createClient(config.url, config.key);
                     
-                    // Fetch all records, optionally order by date descending
-                    const { data, error } = await client
-                        .from(config.table)
-                        .select('*')
-                        .order('date', { ascending: false });
+                    let allData = [];
+                    let keepFetching = true;
+                    let startIndex = 0;
+                    const BATCH_SIZE = 1000;
 
-                    if (error) throw error;
+                    // Supabase by default limits to 1000 rows per request. 
+                    // We must paginate to get the full dataset.
+                    while (keepFetching) {
+                        const { data, error } = await client
+                            .from(config.table)
+                            .select('*')
+                            .order('date', { ascending: false })
+                            .range(startIndex, startIndex + BATCH_SIZE - 1);
 
-                    if (data && data.length > 0) {
+                        if (error) throw error;
+
+                        if (data && data.length > 0) {
+                            allData = [...allData, ...data];
+                            startIndex += BATCH_SIZE;
+                            // If we received exactly the batch size, there might be more
+                            if (data.length < BATCH_SIZE) {
+                                keepFetching = false;
+                            }
+                        } else {
+                            keepFetching = false;
+                        }
+                    }
+
+                    if (allData.length > 0) {
                         // Map Supabase column names back to expected app state format
-                        const formattedData = data.map(row => ({
+                        const formattedData = allData.map(row => ({
                             date: row.date,
                             fgKg: row.fg_kg,
                             fgRolls: row.fg_rolls,
@@ -743,25 +763,7 @@
                 );
             }
 
-            if (rawData.length === 0) {
-                return (
-                    <div 
-                        className={`min-h-screen flex items-center justify-center transition-colors ${isDragging ? 'bg-blue-50' : 'bg-gray-100'}`}
-                        onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
-                    >
-                        <div className="bg-white p-10 rounded-2xl shadow-xl text-center border-2 border-dashed border-gray-300 max-w-lg w-full">
-                            <svg className="w-16 h-16 text-blue-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                            <h2 className="text-2xl font-bold mb-2 text-gray-800">ระบบรายงานการผลิต</h2>
-                            <p className="text-gray-500 mb-6">กรุณาอัปโหลดไฟล์ CSV (รายงานการผลิต) เพื่อเริ่มต้นใช้งาน Dashboard</p>
-                            <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow transition-colors inline-block">
-                                เลือกไฟล์ CSV
-                                <input type="file" accept=".csv" multiple className="hidden" onChange={handleFileUpload} />
-                            </label>
-                            <p className="mt-4 text-sm text-gray-400">หรือลากไฟล์มาวางที่นี่ (รองรับหลายไฟล์)</p>
-                        </div>
-                    </div>
-                );
-            }
+            // (Removed the blocking "Upload CSV" screen so the dashboard always renders immediately)
 
             return (
                 <div className="min-h-screen p-4 md:p-6 flex flex-col gap-6">
