@@ -1,5 +1,4 @@
 
-
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -103,8 +102,51 @@
             const [isSavingSupabase, setIsSavingSupabase] = useState(false);
             const [supabaseMessage, setSupabaseMessage] = useState(null);
 
+            const fetchSupabaseData = async (config) => {
+                if (!config || !config.url || !config.key || !config.table) return;
+                try {
+                    setSupabaseMessage({ type: 'info', text: 'กำลังโหลดข้อมูลจากฐานข้อมูล...' });
+                    const client = window.supabase.createClient(config.url, config.key);
+                    
+                    // Fetch all records, optionally order by date descending
+                    const { data, error } = await client
+                        .from(config.table)
+                        .select('*')
+                        .order('date', { ascending: false });
+
+                    if (error) throw error;
+
+                    if (data && data.length > 0) {
+                        // Map Supabase column names back to expected app state format
+                        const formattedData = data.map(row => ({
+                            date: row.date,
+                            fgKg: row.fg_kg,
+                            fgRolls: row.fg_rolls,
+                            scrapKg: row.scrap_kg,
+                            reworkKg: row.rework_kg,
+                            machine: row.machine,
+                            customer: row.customer,
+                            size: row.size,
+                            shift: row.shift,
+                            symptom: row.symptom,
+                            cause: row.cause,
+                            orderNo: row.order_no
+                        }));
+                        setRawData(formattedData);
+                        setSupabaseMessage({ type: 'success', text: `โหลดข้อมูลสำเร็จ (${formattedData.length} รายการ)` });
+                        setTimeout(() => setSupabaseMessage(null), 3000);
+                    } else {
+                        setSupabaseMessage(null);
+                    }
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    setSupabaseMessage({ type: 'error', text: `โหลดข้อมูลล้มเหลว: ${error.message}` });
+                }
+            };
+
             useEffect(() => {
                 const savedConfig = localStorage.getItem('supabaseConfig');
+                let finalConfig = supabaseConfig;
                 if (savedConfig) {
                     try {
                         const parsed = JSON.parse(savedConfig);
@@ -114,8 +156,12 @@
                             localStorage.setItem('supabaseConfig', JSON.stringify(parsed));
                         }
                         setSupabaseConfig(parsed);
+                        finalConfig = parsed;
                     } catch (e) {}
                 }
+                
+                // Fetch initial data
+                fetchSupabaseData(finalConfig);
             }, []);
 
             // Reset Filters
