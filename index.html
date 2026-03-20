@@ -1,24 +1,24 @@
-
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Production Report Dashboard</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- React & ReactDOM (Pinned to 18.2.0 for stability) -->
     <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-    
+
     <!-- Dependencies Required by Recharts UMD -->
     <script crossorigin src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-is@18.2.0/umd/react-is.production.min.js"></script>
 
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
+
     <!-- Recharts (Pinned to 2.1.12 for stable UMD build) -->
     <script src="https://unpkg.com/recharts@2.1.12/umd/Recharts.js"></script>
 
@@ -33,21 +33,41 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
     </style>
 </head>
+
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
         const Recharts = window.Recharts || {};
-        const { 
-            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+        const {
+            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
             ComposedChart, Line, Cell
         } = Recharts;
 
@@ -62,13 +82,13 @@
             return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: decimals });
         };
 
-        const ALL_MACHINES = ['BL01','BL02','BL03','BL04','BL05','BL06','BL07','BL08','BL09','BL10','BL11'];
+        const ALL_MACHINES = ['BL01', 'BL02', 'BL03', 'BL04', 'BL05', 'BL06', 'BL07', 'BL08', 'BL09', 'BL10', 'BL11'];
 
         // --- Main Component ---
         const App = () => {
             const [rawData, setRawData] = useState([]);
             const [isDragging, setIsDragging] = useState(false);
-            
+
             // Tabs State
             const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -94,10 +114,10 @@
 
             // Supabase State
             const [showSupabaseSettings, setShowSupabaseSettings] = useState(false);
-            const [supabaseConfig, setSupabaseConfig] = useState({ 
+            const [supabaseConfig, setSupabaseConfig] = useState({
                 url: 'https://ahurjzfwbmijwagcoedt.supabase.co', // This is dynamically guessed from your anon key format, you might need to adjust it
-                key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFodXJqemZ3Ym1pandhZ2NvZWR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MDcyMTgsImV4cCI6MjA4OTI4MzIxOH0.e3ZJwBJD3CPur7xz0xM2XO8FcfFRe82qAfjEC3lv708', 
-                table: 'production_data' 
+                key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFodXJqemZ3Ym1pandhZ2NvZWR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3MDcyMTgsImV4cCI6MjA4OTI4MzIxOH0.e3ZJwBJD3CPur7xz0xM2XO8FcfFRe82qAfjEC3lv708',
+                table: 'production_data'
             });
             const [isSavingSupabase, setIsSavingSupabase] = useState(false);
             const [supabaseMessage, setSupabaseMessage] = useState(null);
@@ -107,7 +127,7 @@
                 try {
                     setSupabaseMessage({ type: 'info', text: 'กำลังโหลดข้อมูลจากฐานข้อมูล...' });
                     const client = window.supabase.createClient(config.url, config.key);
-                    
+
                     let allData = [];
                     let keepFetching = true;
                     let startIndex = 0;
@@ -152,8 +172,19 @@
                             cause: row.cause,
                             orderNo: row.order_no
                         }));
-                        setRawData(formattedData);
-                        setSupabaseMessage({ type: 'success', text: `โหลดข้อมูลสำเร็จ (${formattedData.length} รายการ)` });
+
+                        // สร้างชุดข้อมูลแบบไม่ซ้ำ (Deduplicate) เผื่อในอดีตมีการเซฟเบิ้ลลงฐานข้อมูล
+                        const uniqueMap = new Map();
+                        formattedData.forEach(row => {
+                            const key = `${row.date}|${row.machine}|${row.customer}|${row.size}|${row.shift}|${row.symptom}|${row.cause}|${row.orderNo}|${row.fgKg}|${row.scrapKg}|${row.reworkKg}`;
+                            if (!uniqueMap.has(key)) {
+                                uniqueMap.set(key, row);
+                            }
+                        });
+                        const deduplicatedData = Array.from(uniqueMap.values());
+
+                        setRawData(deduplicatedData);
+                        setSupabaseMessage({ type: 'success', text: `โหลดข้อมูลสำเร็จ (${deduplicatedData.length} รายการ)` });
                         setTimeout(() => setSupabaseMessage(null), 3000);
                     } else {
                         setSupabaseMessage(null);
@@ -177,9 +208,9 @@
                         }
                         setSupabaseConfig(parsed);
                         finalConfig = parsed;
-                    } catch (e) {}
+                    } catch (e) { }
                 }
-                
+
                 // Fetch initial data
                 fetchSupabaseData(finalConfig);
             }, []);
@@ -209,13 +240,13 @@
 
                 setIsSavingSupabase(true);
                 setSupabaseMessage({ type: 'info', text: 'กำลังบันทึกข้อมูล...' });
-                
+
                 try {
                     const client = window.supabase.createClient(supabaseConfig.url, supabaseConfig.key);
-                    
+
                     // 1. Identify all unique dates in the current dataset
                     const uniqueDates = [...new Set(rawData.map(row => row.date))].filter(Boolean);
-                    
+
                     if (uniqueDates.length > 0) {
                         setSupabaseMessage({ type: 'info', text: `กำลังเคลียร์ข้อมูลเก่าของวันที่อัปโหลด (${uniqueDates.length} วัน)...` });
                         // 2. Delete existing records for these dates to prevent duplicates
@@ -223,7 +254,7 @@
                             .from(supabaseConfig.table)
                             .delete()
                             .in('date', uniqueDates);
-                            
+
                         if (deleteError) {
                             console.warn("Delete old data warning:", deleteError);
                             // We don't throw here, in case the table is empty or RLS prevents delete but allows insert
@@ -231,12 +262,12 @@
                     }
 
                     setSupabaseMessage({ type: 'info', text: `กำลังบันทึกข้อมูลใหม่ (${rawData.length} รายการ)...` });
-                    
+
                     const dataToInsert = rawData.map((row) => {
                         // Generate a completely unique fingerprint for every row
                         // Since we delete old data first, we don't need to worry about cross-upload collisions
-                        const uniqueFingerprint = window.crypto && window.crypto.randomUUID 
-                            ? crypto.randomUUID() 
+                        const uniqueFingerprint = window.crypto && window.crypto.randomUUID
+                            ? crypto.randomUUID()
                             : `row_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
                         return {
@@ -262,7 +293,7 @@
                         .insert(dataToInsert);
 
                     if (error) throw error;
-                    
+
                     setSupabaseMessage({ type: 'success', text: `บันทึกข้อมูล ${dataToInsert.length} รายการสำเร็จ!` });
                     setTimeout(() => setSupabaseMessage(null), 3000);
                 } catch (error) {
@@ -278,14 +309,14 @@
                     setShowSupabaseSettings(true);
                     return;
                 }
-                
+
                 if (window.confirm("⚠️ คำเตือน: คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลทั้งหมดที่เคยบันทึกไว้ในระบบฐานข้อมูลทิ้ง?\n\n(การกระทำนี้ไม่สามารถย้อนกลับได้)")) {
                     setIsSavingSupabase(true);
                     setSupabaseMessage({ type: 'info', text: 'กำลังลบข้อมูลทั้งหมดในฐานข้อมูล...' });
-                    
+
                     try {
                         const client = window.supabase.createClient(supabaseConfig.url, supabaseConfig.key);
-                        
+
                         // Delete all rows by matching where fingerprint is not null
                         const { error } = await client
                             .from(supabaseConfig.table)
@@ -293,7 +324,7 @@
                             .not('fingerprint', 'is', null);
 
                         if (error) throw error;
-                        
+
                         setRawData([]); // Clear local data on screen
                         setSupabaseMessage({ type: 'success', text: '✅ ล้างข้อมูลในฐานข้อมูลสำเร็จแล้ว!' });
                         setTimeout(() => setSupabaseMessage(null), 3000);
@@ -305,7 +336,7 @@
                     }
                 }
             };
-            
+
             // File Upload Handler
             const handleFileUpload = (e) => {
                 const files = e.target.files || e.dataTransfer.files;
@@ -318,23 +349,46 @@
                         complete: (results) => {
                             const processed = results.data
                                 .filter(row => row['วันที่ผลิต'])
-                                .map(row => ({
-                                    ...row,
-                                    fgKg: parseNum(row['จำนวนที่ผลิตได้ (kg)']),
-                                    fgRolls: parseNum(row['จำนวนที่ผลิตได้ (ม้วน)']),
-                                    scrapKg: parseNum(row['น้ำหนักเศษของเสีย (kg)']),
-                                    reworkKg: parseNum(row['น้ำหนักม้วนรอแก้ไข (kg)']),
-                                    machine: row['เครื่องจักร'] || 'Unknown',
-                                    customer: row['ลูกค้า'] || 'Unknown',
-                                    size: row['ขนาด'] || 'Unknown',
-                                    shift: row['กะ'] || 'Unknown',
-                                    symptom: row['อาการของปัญหา'] || 'ไม่มีระบุ',
-                                    cause: row['สาเหตุ'] || 'ไม่มีระบุ',
-                                    date: row['วันที่ผลิต'],
-                                    orderNo: row['เลขที่ใบสั่งผลิต'] || ''
-                                }));
-                            
-                            setRawData(prev => [...prev, ...processed]);
+                                .map(row => {
+                                    // ฟอร์แมตวันที่ให้อยู่ในรูปแบบ YYYY-MM-DD เพื่อให้ฟิลเตอร์ตัวกรองวันที่ทำงานได้ถูกต้อง 100%
+                                    let rawDate = row['วันที่ผลิต'];
+                                    let finalDate = rawDate;
+                                    if (rawDate && rawDate.includes('/')) {
+                                        const p = rawDate.split('/');
+                                        if (p.length === 3) {
+                                            // สมมติฐานว่า CSV เป็น DD/MM/YYYY
+                                            let day = p[0].padStart(2, '0');
+                                            let month = p[1].padStart(2, '0');
+                                            let year = p[2];
+                                            if (year.length === 2) year = '20' + year; // เปลี่ยน 26 เป็น 2026
+                                            finalDate = `${year}-${month}-${day}`;
+                                        }
+                                    }
+
+                                    return {
+                                        ...row,
+                                        fgKg: parseNum(row['จำนวนที่ผลิตได้ kg'] || row['จำนวนที่ผลิตได้ (kg)'] || row['จำนวนผลิตได้ (kg)'] || row['FG kg']),
+                                        fgRolls: parseNum(row['จำนวนม้วน (ม้วน)'] || row['จำนวนที่ผลิตได้ (ม้วน)'] || row['จำนวนผลิตได้ (ม้วน)']),
+                                        scrapKg: parseNum(row['น้ำหนักเศษของเสีย (kg)'] || row['น้ำหนักเศษของเสีย kg']),
+                                        reworkKg: parseNum(row['น้ำหนักม้วนรอแก้ไข (kg)'] || row['น้ำหนักม้วนรอแก้ไข kg']),
+                                        machine: row['เครื่องจักร'] || 'Unknown',
+                                        customer: row['ลูกค้า'] || 'Unknown',
+                                        size: row['ขนาด'] || 'Unknown',
+                                        shift: row['กะ'] || 'Unknown',
+                                        symptom: row['อาการของปัญหา'] || 'ไม่มีระบุ',
+                                        cause: row['สาเหตุ'] || 'ไม่มีระบุ',
+                                        date: finalDate,
+                                        orderNo: row['เลขที่ใบสั่งผลิต'] || ''
+                                    };
+                                });
+
+                            const newDates = Array.from(new Set(processed.map(row => row.date)));
+
+                            setRawData(prev => {
+                                // ลบข้อมูลเดิมที่มีวันที่ตรงกับข้อมูลใหม่ที่อัปโหลด เพื่อป้องกันข้อมูลซ้ำ (Over)
+                                const filteredPrev = prev.filter(row => !newDates.includes(row.date));
+                                return [...filteredPrev, ...processed];
+                            });
                         }
                     });
                 });
@@ -352,13 +406,13 @@
                     if (filters.customer !== 'All' && row.customer !== filters.customer) return false;
                     if (filters.size !== 'All' && row.size !== filters.size) return false;
                     if (filters.shift !== 'All' && row.shift !== filters.shift) return false;
-                    
+
                     if (filters.startDate && new Date(row.date) < new Date(filters.startDate)) return false;
                     if (filters.endDate && new Date(row.date) > new Date(filters.endDate)) return false;
 
                     if (searchQuery) {
                         const q = searchQuery.toLowerCase();
-                        const match = 
+                        const match =
                             row.customer.toLowerCase().includes(q) ||
                             row.size.toLowerCase().includes(q) ||
                             row.date.toLowerCase().includes(q) ||
@@ -390,7 +444,7 @@
                 const totalOutput = fgKg + scrapKg + reworkKg;
                 const scrapPercent = fgKg > 0 ? (scrapKg / fgKg) * 100 : 0;
                 const reworkPercent = fgKg > 0 ? (reworkKg / fgKg) * 100 : 0;
-                
+
                 const fgPercentOfOutput = totalOutput > 0 ? (fgKg / totalOutput) * 100 : 0;
                 const lossPercentOfOutput = totalOutput > 0 ? ((scrapKg + reworkKg) / totalOutput) * 100 : 0;
 
@@ -443,7 +497,7 @@
                     if (d.fgKg > 0) {
                         m.fgJobs[jobKey] = (m.fgJobs[jobKey] || 0) + d.fgKg;
                     }
-                    
+
                     const loss = d.scrapKg + d.reworkKg;
                     if (loss > 0) {
                         m.lossJobs[jobKey] = (m.lossJobs[jobKey] || 0) + loss;
@@ -461,7 +515,7 @@
                     const sortedByFG = [...machines].sort((a, b) => b.fgKg - a.fgKg).slice(0, 3);
                     top3FGMachines = sortedByFG.map(m => {
                         if (m.fgKg > 0) {
-                            const topJob = Object.entries(m.fgJobs).sort((a,b)=>b[1]-a[1])[0];
+                            const topJob = Object.entries(m.fgJobs).sort((a, b) => b[1] - a[1])[0];
                             const [topCustomer, topSize] = topJob ? topJob[0].split(' | ') : ['-', '-'];
                             return {
                                 ...m,
@@ -482,7 +536,7 @@
                     top3LossMachines = sortedByLoss.map(m => {
                         const totalLoss = m.scrapKg + m.reworkKg;
                         if (totalLoss > 0) {
-                            const topLossJob = Object.entries(m.lossJobs).sort((a,b)=>b[1]-a[1])[0];
+                            const topLossJob = Object.entries(m.lossJobs).sort((a, b) => b[1] - a[1])[0];
                             const [topCustomer, topSize] = topLossJob ? topLossJob[0].split(' | ') : ['-', '-'];
 
                             // Calculate top symptoms for this machine
@@ -549,7 +603,7 @@
                 const map = {};
                 // Initialize all BL01-BL11
                 ALL_MACHINES.forEach(m => map[m] = { name: m, FG: 0, Scrap: 0, Rework: 0 });
-                
+
                 filteredData.forEach(d => {
                     // Include any machine even if it's not in the predefined list, but ensure predefined ones stay
                     if (!map[d.machine]) map[d.machine] = { name: d.machine, FG: 0, Scrap: 0, Rework: 0 };
@@ -563,23 +617,23 @@
 
             // 2. All Customers (Overall) - Highest to Lowest with details
             const customerStats = useMemo(() => {
-                 const map = {};
-                 let overallTotalFG = 0;
-                 filteredData.forEach(d => {
+                const map = {};
+                let overallTotalFG = 0;
+                filteredData.forEach(d => {
                     overallTotalFG += d.fgKg;
                     if (!map[d.customer]) map[d.customer] = { name: d.customer, FG: 0, Scrap: 0, Rework: 0, sizes: {} };
                     map[d.customer].FG += d.fgKg;
                     map[d.customer].Scrap += d.scrapKg;
                     map[d.customer].Rework += d.reworkKg;
-                    
+
                     const sName = d.size && d.size !== 'Unknown' ? d.size : 'ไม่ระบุขนาด';
                     if (!map[d.customer].sizes[sName]) map[d.customer].sizes[sName] = { FG: 0, Scrap: 0, Rework: 0 };
                     map[d.customer].sizes[sName].FG += d.fgKg;
                     map[d.customer].sizes[sName].Scrap += d.scrapKg;
                     map[d.customer].sizes[sName].Rework += d.reworkKg;
-                 });
-                 
-                 return Object.values(map)
+                });
+
+                return Object.values(map)
                     .map(c => ({
                         ...c,
                         sizeDetails: Object.entries(c.sizes).map(([sizeName, stats]) => ({
@@ -588,7 +642,7 @@
                             Scrap: stats.Scrap,
                             Rework: stats.Rework,
                             percentOfOverallFG: overallTotalFG > 0 ? (stats.FG / overallTotalFG) * 100 : 0
-                        })).sort((a,b) => b.FG - a.FG)
+                        })).sort((a, b) => b.FG - a.FG)
                     }))
                     .sort((a, b) => b.FG - a.FG);
             }, [filteredData]);
@@ -628,9 +682,9 @@
 
             // 3. Top Symptoms/Causes (Loss Kg)
             const problemStats = useMemo(() => {
-                 const map = {};
-                 let totalLoss = 0;
-                 filteredData.forEach(d => {
+                const map = {};
+                let totalLoss = 0;
+                filteredData.forEach(d => {
                     const lossKg = d.scrapKg + d.reworkKg;
                     totalLoss += lossKg;
                     if (lossKg > 0 && d.symptom && d.symptom !== 'ไม่มีระบุ') {
@@ -639,9 +693,9 @@
                         if (!map[key]) map[key] = { name: key, lossKg: 0, symptom: d.symptom, cause: d.cause };
                         map[key].lossKg += lossKg;
                     }
-                 });
-                 
-                 return Object.values(map)
+                });
+
+                return Object.values(map)
                     .map(p => ({
                         ...p,
                         percentOfTotalLoss: totalLoss > 0 ? (p.lossKg / totalLoss) * 100 : 0
@@ -689,7 +743,7 @@
             };
 
             const openMachineDetails = (data) => {
-                const machineName = data.name; 
+                const machineName = data.name;
                 const machineData = filteredData.filter(d => d.machine === machineName);
                 let totalMachineFG = 0;
                 const problemMap = {};
@@ -727,21 +781,21 @@
 
                 const machineMap = {};
                 relatedData.forEach(d => {
-                    if(!machineMap[d.machine]) machineMap[d.machine] = { scrap: 0, rework: 0 };
+                    if (!machineMap[d.machine]) machineMap[d.machine] = { scrap: 0, rework: 0 };
                     machineMap[d.machine].scrap += d.scrapKg;
                     machineMap[d.machine].rework += d.reworkKg;
                 });
 
                 const machinesBreakdown = Object.entries(machineMap)
                     .map(([m, vals]) => ({
-                        machine: m, 
+                        machine: m,
                         scrap: vals.scrap,
                         rework: vals.rework,
                         total: vals.scrap + vals.rework,
                         scrapPercent: data.lossKg > 0 ? (vals.scrap / data.lossKg) * 100 : 0,
                         reworkPercent: data.lossKg > 0 ? (vals.rework / data.lossKg) * 100 : 0
                     }))
-                    .sort((a,b)=>b.total - a.total);
+                    .sort((a, b) => b.total - a.total);
 
                 setProblemModalData({
                     problem: problemName,
@@ -773,47 +827,47 @@
                             <h1 className="text-2xl font-bold text-gray-800">📊 Production Dashboard</h1>
                             <p className="text-sm text-gray-500">ข้อมูลรวมทั้งหมด {rawData.length} รายการ | แสดงผล {filteredData.length} รายการ</p>
                         </div>
-                        
+
                         <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                            <input 
-                                type="text" 
-                                placeholder="🔍 ค้นหา ลูกค้า, ขนาด, วันที่, ใบสั่ง..." 
+                            <input
+                                type="text"
+                                placeholder="🔍 ค้นหา ลูกค้า, ขนาด, วันที่, ใบสั่ง..."
                                 className="px-4 py-2 border rounded-lg w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                             <label className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow transition-colors flex items-center justify-center gap-2 whitespace-nowrap">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                 แนบไฟล์เพิ่ม
                                 <input type="file" accept=".csv" multiple className="hidden" onChange={handleFileUpload} />
                             </label>
-                            
+
                             <div className="flex gap-2">
-                                <button 
+                                <button
                                     onClick={uploadToSupabase}
                                     disabled={isSavingSupabase}
                                     className={`px-4 py-2 rounded-lg shadow transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-white ${isSavingSupabase ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                                     {isSavingSupabase ? 'กำลังบันทึก...' : 'บันทึกลง Supabase'}
                                 </button>
-                                
-                                <button 
+
+                                <button
                                     onClick={clearSupabaseData}
                                     disabled={isSavingSupabase}
                                     className={`px-4 py-2 rounded-lg shadow transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-red-700 bg-red-100 hover:bg-red-200 border border-red-200 ${isSavingSupabase ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     title="ล้างข้อมูลการผลิตทั้งหมดในฐานข้อมูล"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     ล้างฐานข้อมูล
                                 </button>
 
-                                <button 
+                                <button
                                     onClick={() => setShowSupabaseSettings(true)}
                                     className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg shadow-sm border transition-colors flex items-center justify-center"
                                     title="ตั้งค่า Supabase"
                                 >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                 </button>
                             </div>
                         </div>
@@ -829,13 +883,13 @@
 
                     {/* Navigation Tabs */}
                     <div className="flex gap-2 bg-gray-200 p-1 rounded-lg w-fit">
-                        <button 
+                        <button
                             onClick={() => setActiveTab('dashboard')}
                             className={`px-6 py-2 rounded-md font-semibold transition-colors ${activeTab === 'dashboard' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:bg-gray-300'}`}
                         >
                             📊 Dashboard ภาพรวม
                         </button>
-                        <button 
+                        <button
                             onClick={() => setActiveTab('comparison')}
                             className={`px-6 py-2 rounded-md font-semibold transition-colors ${activeTab === 'comparison' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:bg-gray-300'}`}
                         >
@@ -851,40 +905,40 @@
                                 <div className="flex justify-between items-center mb-3">
                                     <h3 className="font-semibold text-gray-700">ตัวกรองข้อมูล</h3>
                                     <button onClick={resetFilters} className="text-sm text-red-500 hover:text-red-700 hover:underline flex items-center gap-1">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                         ล้างค่า (Reset)
                                     </button>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                                     <div>
                                         <label className="text-xs text-gray-500 mb-1 block">ตั้งแต่วันที่</label>
-                                        <input type="date" className="w-full border rounded p-1.5 text-sm" value={filters.startDate} onChange={e => setFilters({...filters, startDate: e.target.value})} />
+                                        <input type="date" className="w-full border rounded p-1.5 text-sm" value={filters.startDate} onChange={e => setFilters({ ...filters, startDate: e.target.value })} />
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500 mb-1 block">ถึงวันที่</label>
-                                        <input type="date" className="w-full border rounded p-1.5 text-sm" value={filters.endDate} onChange={e => setFilters({...filters, endDate: e.target.value})} />
+                                        <input type="date" className="w-full border rounded p-1.5 text-sm" value={filters.endDate} onChange={e => setFilters({ ...filters, endDate: e.target.value })} />
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500 mb-1 block">เครื่องจักร</label>
-                                        <select className="w-full border rounded p-1.5 text-sm" value={filters.machine} onChange={e => setFilters({...filters, machine: e.target.value})}>
+                                        <select className="w-full border rounded p-1.5 text-sm" value={filters.machine} onChange={e => setFilters({ ...filters, machine: e.target.value })}>
                                             {options.machines.map(m => <option key={m} value={m}>{m === 'All' ? 'ทั้งหมด' : m}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500 mb-1 block">ลูกค้า</label>
-                                        <select className="w-full border rounded p-1.5 text-sm" value={filters.customer} onChange={e => setFilters({...filters, customer: e.target.value})}>
+                                        <select className="w-full border rounded p-1.5 text-sm" value={filters.customer} onChange={e => setFilters({ ...filters, customer: e.target.value })}>
                                             {options.customers.map(m => <option key={m} value={m}>{m === 'All' ? 'ทั้งหมด' : m}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500 mb-1 block">ขนาด</label>
-                                        <select className="w-full border rounded p-1.5 text-sm" value={filters.size} onChange={e => setFilters({...filters, size: e.target.value})}>
-                                            {options.sizes.map(m => <option key={m} value={m}>{m === 'All' ? 'ทั้งหมด' : (m.length > 20 ? m.substring(0,20)+'...' : m)}</option>)}
+                                        <select className="w-full border rounded p-1.5 text-sm" value={filters.size} onChange={e => setFilters({ ...filters, size: e.target.value })}>
+                                            {options.sizes.map(m => <option key={m} value={m}>{m === 'All' ? 'ทั้งหมด' : (m.length > 20 ? m.substring(0, 20) + '...' : m)}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500 mb-1 block">กะ</label>
-                                        <select className="w-full border rounded p-1.5 text-sm" value={filters.shift} onChange={e => setFilters({...filters, shift: e.target.value})}>
+                                        <select className="w-full border rounded p-1.5 text-sm" value={filters.shift} onChange={e => setFilters({ ...filters, shift: e.target.value })}>
                                             {options.shifts.map(m => <option key={m} value={m}>{m === 'All' ? 'ทั้งหมด' : m}</option>)}
                                         </select>
                                     </div>
@@ -908,7 +962,7 @@
                                     </div>
                                     {/* Dual Progress Bar */}
                                     <div className="w-full bg-red-500 flex rounded-full h-1.5 mt-3 overflow-hidden">
-                                        <div className="bg-purple-500 h-1.5" style={{width: `${kpis.fgPercentOfOutput}%`}}></div>
+                                        <div className="bg-purple-500 h-1.5" style={{ width: `${kpis.fgPercentOfOutput}%` }}></div>
                                     </div>
                                     <p className="text-xs mt-1 font-medium">
                                         <span className="text-purple-600">FG: {formatNum(kpis.fgPercentOfOutput)}%</span>
@@ -942,7 +996,7 @@
                             {summaryInsights && (summaryInsights.top3FGMachines.length > 0 || summaryInsights.top3LossMachines.length > 0) && (
                                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                     <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                         สรุปข้อมูลเชิงลึก (Insights 3 อันดับ)
                                     </h3>
                                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -963,7 +1017,7 @@
                                                             <div className="text-sm text-gray-600 space-y-1">
                                                                 <p>📌 งานหลัก: ลูกค้า <span className="font-medium">{m.topCustomer}</span> ขนาด <span className="font-medium">{m.topSize}</span></p>
                                                                 <p className="text-xs">
-                                                                    เศษเสีย <span className="text-red-500">{formatNum(m.scrapKg)} kg ({formatNum(m.scrapPercent)}%)</span> | 
+                                                                    เศษเสีย <span className="text-red-500">{formatNum(m.scrapKg)} kg ({formatNum(m.scrapPercent)}%)</span> |
                                                                     ม้วนแก้ไข <span className="text-orange-500">{formatNum(m.reworkKg)} kg ({formatNum(m.reworkPercent)}%)</span>
                                                                 </p>
                                                             </div>
@@ -990,10 +1044,10 @@
                                                             <div className="text-sm text-gray-600 space-y-2">
                                                                 <p>📌 งานหลักที่เสีย: ลูกค้า <span className="font-medium">{m.topCustomer}</span> ขนาด <span className="font-medium">{m.topSize}</span></p>
                                                                 <p className="text-xs">
-                                                                    เศษเสีย <span className="text-red-500">{formatNum(m.scrapKg)} kg ({formatNum(m.scrapPercent)}%)</span> | 
+                                                                    เศษเสีย <span className="text-red-500">{formatNum(m.scrapKg)} kg ({formatNum(m.scrapPercent)}%)</span> |
                                                                     ม้วนแก้ไข <span className="text-orange-500">{formatNum(m.reworkKg)} kg ({formatNum(m.reworkPercent)}%)</span>
                                                                 </p>
-                                                                
+
                                                                 {/* Top 5 Symptoms for this machine */}
                                                                 {m.topSymptomsList && m.topSymptomsList.length > 0 && (
                                                                     <div className="mt-2 pt-2 border-t border-gray-100">
@@ -1022,7 +1076,7 @@
 
                             {/* Charts Grid */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                
+
                                 {/* Chart 1: Scrap & Rework vs FG by Machine */}
                                 <div className="bg-white p-5 rounded-xl shadow-sm lg:col-span-2">
                                     <div className="flex justify-between items-center mb-4">
@@ -1031,17 +1085,16 @@
                                     </div>
                                     <div className="h-80">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={machineStats} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                            <BarChart data={machineStats} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                                 <XAxis dataKey="name" />
-                                                <YAxis yAxisId="left" tickFormatter={(val) => formatNum(val,0)} />
-                                                <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => formatNum(val,0)} />
+                                                <YAxis tickFormatter={(val) => formatNum(val, 0)} />
                                                 <Tooltip formatter={(value) => formatNum(value) + ' kg'} />
                                                 <Legend />
-                                                <Bar yAxisId="left" dataKey="Scrap" name="เศษเสีย (kg)" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} onClick={openMachineDetails} cursor="pointer" />
-                                                <Bar yAxisId="left" dataKey="Rework" name="ม้วนรอแก้ไข (kg)" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} onClick={openMachineDetails} cursor="pointer" />
-                                                <Line yAxisId="right" type="monotone" dataKey="FG" name="FG (kg)" stroke="#3b82f6" strokeWidth={3} dot={{r:4}} />
-                                            </ComposedChart>
+                                                <Bar dataKey="FG" name="FG (kg)" fill="#3b82f6" radius={[4, 4, 0, 0]} onClick={openMachineDetails} cursor="pointer" />
+                                                <Bar dataKey="Scrap" name="เศษเสีย (kg)" fill="#ef4444" radius={[4, 4, 0, 0]} onClick={openMachineDetails} cursor="pointer" />
+                                                <Bar dataKey="Rework" name="ม้วนรอแก้ไข (kg)" fill="#f97316" radius={[4, 4, 0, 0]} onClick={openMachineDetails} cursor="pointer" />
+                                            </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
@@ -1054,12 +1107,12 @@
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={customerStats} layout="vertical" margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                                                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                                    <XAxis type="number" tickFormatter={(val) => formatNum(val,0)} />
-                                                    <YAxis dataKey="name" type="category" width={90} tick={{fontSize: 12}} interval={0} />
-                                                    <Tooltip content={<CustomerTooltip />} cursor={{fill: 'transparent'}} />
+                                                    <XAxis type="number" tickFormatter={(val) => formatNum(val, 0)} />
+                                                    <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 12 }} interval={0} />
+                                                    <Tooltip content={<CustomerTooltip />} cursor={{ fill: 'transparent' }} />
                                                     <Bar dataKey="FG" name="FG (kg)" fill="#8b5cf6" radius={[0, 4, 4, 0]} onClick={openCustomerDetails} cursor="pointer">
                                                         {customerStats.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={['#8b5cf6','#6366f1','#3b82f6','#0ea5e9','#06b6d4'][index % 5]} />
+                                                            <Cell key={`cell-${index}`} fill={['#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4'][index % 5]} />
                                                         ))}
                                                     </Bar>
                                                 </BarChart>
@@ -1079,9 +1132,9 @@
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={problemStats} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
                                                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                                    <XAxis type="number" tickFormatter={(val) => formatNum(val,0)} />
-                                                    <YAxis dataKey="name" type="category" width={140} tick={{fontSize: 11}} interval={0} />
-                                                    <Tooltip content={<ProblemTooltip />} cursor={{fill: '#fee2e2'}} />
+                                                    <XAxis type="number" tickFormatter={(val) => formatNum(val, 0)} />
+                                                    <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11 }} interval={0} />
+                                                    <Tooltip content={<ProblemTooltip />} cursor={{ fill: '#fee2e2' }} />
                                                     <Bar dataKey="lossKg" name="สูญเสีย (kg)" fill="#ef4444" radius={[0, 4, 4, 0]} onClick={openProblemDetails} cursor="pointer" />
                                                 </BarChart>
                                             </ResponsiveContainer>
@@ -1149,25 +1202,25 @@
                                         <div className="flex gap-4">
                                             <div className="flex-1">
                                                 <label className="text-xs text-gray-500 mb-1 block">ตั้งแต่วันที่</label>
-                                                <input type="date" className="w-full border border-blue-200 rounded p-2 text-sm" value={compA.start} onChange={e => setCompA({...compA, start: e.target.value})} />
+                                                <input type="date" className="w-full border border-blue-200 rounded p-2 text-sm" value={compA.start} onChange={e => setCompA({ ...compA, start: e.target.value })} />
                                             </div>
                                             <div className="flex-1">
                                                 <label className="text-xs text-gray-500 mb-1 block">ถึงวันที่</label>
-                                                <input type="date" className="w-full border border-blue-200 rounded p-2 text-sm" value={compA.end} onChange={e => setCompA({...compA, end: e.target.value})} />
+                                                <input type="date" className="w-full border border-blue-200 rounded p-2 text-sm" value={compA.end} onChange={e => setCompA({ ...compA, end: e.target.value })} />
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="bg-purple-50/50 p-4 rounded-lg border border-purple-100">
                                         <h4 className="font-semibold text-purple-800 mb-3">ช่วงเวลาที่ 2 (Period B)</h4>
                                         <div className="flex gap-4">
                                             <div className="flex-1">
                                                 <label className="text-xs text-gray-500 mb-1 block">ตั้งแต่วันที่</label>
-                                                <input type="date" className="w-full border border-purple-200 rounded p-2 text-sm" value={compB.start} onChange={e => setCompB({...compB, start: e.target.value})} />
+                                                <input type="date" className="w-full border border-purple-200 rounded p-2 text-sm" value={compB.start} onChange={e => setCompB({ ...compB, start: e.target.value })} />
                                             </div>
                                             <div className="flex-1">
                                                 <label className="text-xs text-gray-500 mb-1 block">ถึงวันที่</label>
-                                                <input type="date" className="w-full border border-purple-200 rounded p-2 text-sm" value={compB.end} onChange={e => setCompB({...compB, end: e.target.value})} />
+                                                <input type="date" className="w-full border border-purple-200 rounded p-2 text-sm" value={compB.end} onChange={e => setCompB({ ...compB, end: e.target.value })} />
                                             </div>
                                         </div>
                                     </div>
@@ -1280,13 +1333,13 @@
                                             {compMachineStats.map((m, i) => {
                                                 const scrapDiff = m.scrapB - m.scrapA;
                                                 const hasData = m.fgA > 0 || m.fgB > 0;
-                                                
+
                                                 return (
                                                     <tr key={i} className="border-b hover:bg-gray-50 text-sm transition-colors">
                                                         <td className="p-3 border-r text-gray-800 font-medium">{m.name}</td>
                                                         <td className="p-3 border-r text-right text-gray-600">{formatNum(m.fgA)}</td>
                                                         <td className="p-3 border-r text-right text-blue-600 font-medium">{formatNum(m.fgB)}</td>
-                                                        
+
                                                         <td className="p-3 border-r text-right text-gray-600">{formatNum(m.scrapA)}%</td>
                                                         <td className="p-3 border-r text-right text-red-500 font-medium">{formatNum(m.scrapB)}%</td>
                                                         <td className="p-3 border-r text-center">
@@ -1322,7 +1375,7 @@
                                         สรุปปัญหาและสาเหตุ: เครื่อง {modalData.machine}
                                     </h2>
                                     <button onClick={() => setModalData(null)} className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
                                 </div>
                                 <div className="p-4">
@@ -1373,7 +1426,7 @@
                                         <p className="text-sm text-red-600 font-medium mt-1">สูญเสียรวม (เสีย+แก้ไข): {formatNum(problemModalData.totalKg)} kg ({formatNum(problemModalData.percent)}%)</p>
                                     </div>
                                     <button onClick={() => setProblemModalData(null)} className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors self-start ml-2">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
                                 </div>
                                 <div className="p-4">
@@ -1416,7 +1469,7 @@
                                         รายละเอียดขนาด: ลูกค้า {customerModalData.name}
                                     </h2>
                                     <button onClick={() => setCustomerModalData(null)} className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
                                 </div>
                                 <div className="p-4">
@@ -1453,42 +1506,42 @@
                             <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
                                 <div className="flex justify-between items-center p-4 border-b">
                                     <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+                                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>
                                         ตั้งค่าเชื่อมต่อ Supabase
                                     </h2>
                                     <button onClick={() => setShowSupabaseSettings(false)} className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1 transition-colors">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
                                 </div>
                                 <div className="p-5 space-y-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Supabase Project URL</label>
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             placeholder="https://xxxx.supabase.co"
                                             value={supabaseConfig.url}
-                                            onChange={e => setSupabaseConfig({...supabaseConfig, url: e.target.value})}
+                                            onChange={e => setSupabaseConfig({ ...supabaseConfig, url: e.target.value })}
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Anon / Public Key</label>
-                                        <input 
-                                            type="password" 
+                                        <input
+                                            type="password"
                                             className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                                             value={supabaseConfig.key}
-                                            onChange={e => setSupabaseConfig({...supabaseConfig, key: e.target.value})}
+                                            onChange={e => setSupabaseConfig({ ...supabaseConfig, key: e.target.value })}
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Table Name (ชื่อตาราง)</label>
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             placeholder="production_data"
                                             value={supabaseConfig.table}
-                                            onChange={e => setSupabaseConfig({...supabaseConfig, table: e.target.value})}
+                                            onChange={e => setSupabaseConfig({ ...supabaseConfig, table: e.target.value })}
                                         />
                                         <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg mt-3">
                                             <p className="text-xs text-blue-800 font-medium mb-1">📌 โครงสร้างคอลัมน์ที่ต้องสร้างใน Supabase (PostgreSQL):</p>
@@ -1498,7 +1551,7 @@
                                         </div>
                                     </div>
                                     <div className="pt-2">
-                                        <button 
+                                        <button
                                             className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition-colors shadow-sm"
                                             onClick={() => saveSupabaseConfig(supabaseConfig)}
                                         >
@@ -1518,4 +1571,5 @@
         root.render(<App />);
     </script>
 </body>
+
 </html>
